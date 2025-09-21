@@ -6,27 +6,27 @@
 # deactivate
 # --------------------------------------------------------
 from geneticalgorithm2 import geneticalgorithm2 as ga
-from simanneal import Annealer as sa
-
 
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 
 from pfo_lattice_model import HP3DLatticeModel
+from pfo_simulated_annealing import HP3DSimulatedAnnealing
 # --------------------------------------------------------
 
 def optimize_ga(sequence):
+    """Optimize using Genetic Algorithm"""
     print("Optimizing with Genetic Algorithm...")
     hp_model = HP3DLatticeModel(sequence)
+    hp_model.label = 'Genetic Algorithm'
 
     # Default GA parameters
     default_params = {
-        'max_num_iteration': 10000,
+        'max_num_iteration': 1000,  # Reduced for faster comparison
         'population_size': 100,
         'mutation_probability': 0.1,
         'elit_ratio': 0.01,
-        # 'crossover_probability': 0.5,
         'parents_portion': 0.3,
         'crossover_type': 'uniform',
         'mutation_type': 'uniform_by_center',
@@ -47,29 +47,135 @@ def optimize_ga(sequence):
     print(f"Sequence length: {hp_model.length}")
     print(f"Search space size: 6^{hp_model.length-1} = {6**(hp_model.length-1):.2e}")
     
-    ga_model.run(function=hp_model.fitness_function)
-    print(ga_model)
+    ga_model.run(function=hp_model.fitness_function, no_plot=True)
     hp_model.get_results_summary(ga_model)
-    visualize_best(hp_model.best_conformation, hp_model)
+    hp_model.energy_history = ga_model.report
+
+    if hp_model.best_conformation is not None:
+        # visualize_best(hp_model.best_conformation, hp_model, "Best 3D HP Conformation (GA)")
+        pass
+    
+    # Store convergence data in the model for comparison
+    hp_model.ga_model = ga_model
+    
+    return hp_model
 
 
 def optimize_sa(sequence):
+    """Optimize using Simulated Annealing"""
     print("Optimizing with Simulated Annealing...")
     hp_model = HP3DLatticeModel(sequence)
-    return ''
+    hp_model.label = 'Simulated Annealing'
+    
+    # Create SA extension
+    sa_solver = HP3DSimulatedAnnealing(hp_model)
+    
+    # Configure annealing schedule
+    sa_solver.Tmax = 100.0       # Maximum temperature
+    sa_solver.Tmin = 0.01        # Minimum temperature  
+    sa_solver.steps = 10000      # Reduced for faster comparison
+    sa_solver.updates = 500      # Update frequency
+    
+    print(f"Starting SA optimization for sequence: {hp_model.sequence}")
+    print(f"Sequence length: {hp_model.length}")
+    print(f"Search space size: 6^{hp_model.length-1} = {6**(hp_model.length-1):.2e}")
+    
+    # Run optimization
+    best_state, best_energy = sa_solver.anneal()
+    
+    # Print results
+    sa_solver.get_results_summary()
+
+    hp_model.best_energy = sa_solver.best_energy_value
+    hp_model.energy_history = sa_solver.energy_history
+    
+    # if sa_solver.best_conformation is not None:
+    #     visualize_best(sa_solver.best_conformation, hp_model, "Best 3D HP Conformation (SA)")
+    
+    return hp_model
+
+def compare_algorithms(sequence):
+    """Compare GA and SA performance"""
+    print(f"\n{'='*80}")
+    print(f"COMPARING ALGORITHMS FOR SEQUENCE: {sequence}")
+    print(f"{'='*80}")
+    
+    # Run GA
+    print("\n" + "-"*40)
+    ga_result = optimize_ga(sequence)
+    ga_energy = ga_result.best_energy
+    ga_evaluations = ga_result.evaluation_count
+    ga_iterations, ga_energies = ga_result.get_ga_convergence_data(None)  # Will be handled in optimize_ga
+    
+    # Reset evaluation counter for fair comparison
+    print("\n" + "-"*40)
+    sa_result = optimize_sa(sequence)
+    sa_energy = sa_result.best_energy
+    sa_evaluations = sa_result.evaluation_count
+    sa_iterations, sa_energies = len(sa_result.energy_history), sa_result.energy_history
+    
+    # Comparison summary
+    print(f"\n{'='*60}")
+    print("ALGORITHM COMPARISON SUMMARY")
+    print(f"{'='*60}")
+    print(f"Sequence: {sequence}")
+    print(f"Length: {len(sequence)}")
+    print()
+    print(f"{'Algorithm':<15} {'Best Energy':<12} {'H-H Contacts':<12} {'Evaluations':<12}")
+    print("-" * 60)
+    print(f"{'GA':<15} {ga_energy:<12.2f} {-int(ga_energy):<12} {ga_evaluations:<12}")
+    print(f"{'SA':<15} {sa_energy:<12.2f} {-int(sa_energy):<12} {sa_evaluations:<12}")
+    print()
+    
+    if sa_energy < ga_energy:
+        print("🏆 Simulated Annealing found better solution!")
+    elif ga_energy < sa_energy:
+        print("🏆 Genetic Algorithm found better solution!")
+    else:
+        print("🤝 Both algorithms found equally good solutions!")
+    
+    print(f"{'='*60}")
+    
+    # Plot convergence comparison
+    # plot_convergence_comparison(ga_iterations, ga_energies, sa_iterations, sa_energies, sequence)
+    
+    return [ga_result, sa_result]
 
 def main():
     sequences = [
         "HPHPPHHPHPPHPHHPPHPH", 
         # "HHPPHPPHPPHPPHPPHPPHPPHH", 
         # "PPPHHPPHHPPPPPHHHHHHHPPHHPPPPHHPPHPP"
-        ]
+    ]
+    
     for sequence in sequences:
-        optimize_sa(sequence)
-        # optimize_ga(sequence)
+        # Choose optimization method
+        method = "compare"  # Options: "ga", "sa", "compare"
+        models = []
+        labels = []
+        
+        if method == "ga":
+            ga_model = optimize_ga(sequence)
+            models.append(ga_model.energy_history)
+            labels.append(ga_model.label)
+        elif method == "sa":
+            sa_model = optimize_sa(sequence)
+            models.append(sa_model.energy_history)
+            labels.append(sa_model.label)
+        elif method == "compare":
+            compare_models = compare_algorithms(sequence)
+            models = [m.energy_history for m in compare_models]
+            labels = [m.label for m in compare_models]
+        
+        plot_energy_history(models, labels, sequence)
 
+        # Future algorithms can be added here:
+        # elif method == "pso":
+        #     optimize_pso(sequence)
+        # elif method == "de":
+        #     optimize_differential_evolution(sequence)
 
-def visualize_best(best_conformation, hp_model, title: str = "Best 3D HP Conformation (GA)"):
+def visualize_best(best_conformation, hp_model, title: str = "Best 3D HP Conformation"):
     """Visualize the best conformation found"""
     if best_conformation is None:
         print("No valid conformation found yet. Run optimization first.")
@@ -142,6 +248,19 @@ def visualize_best(best_conformation, hp_model, title: str = "Best 3D HP Conform
     
     print(f"H-H contact pairs: {contact_pairs}")
     print(f"Total evaluations: {hp_model.evaluation_count}")
+
+def plot_energy_history(history, labels, sequence):
+    print('history length:', len(history))
+    print('labels length:', len(labels))
+    print(labels)
+    for h, l in zip(history, labels):
+        plt.plot(h, label=l)
+
+    plt.xlabel("Generation")
+    plt.ylabel("Best Energy")
+    plt.title(f"Convergence for {sequence}")
+    plt.legend(loc="best")
+    plt.show()
 
 if __name__ == "__main__":
     main()
