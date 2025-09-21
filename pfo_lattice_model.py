@@ -20,6 +20,7 @@ class HP3DLatticeModel:
         self.evaluation_count = 0
         self.energy_history = []
         self.label = ''
+        self.model = None
         
         if not all(aa in 'HP' for aa in self.sequence):
             raise ValueError("Sequence must contain only 'H' and 'P' residues")
@@ -158,7 +159,7 @@ class HP3DLatticeModel:
             return float('inf')
         return self.calculate_energy(conformation)
     
-    def get_results_summary(self, ga_model):
+    def get_results_summary(self):
         """Print summary of optimization results"""
         print("\n" + "="*60)
         print("GENETIC ALGORITHM OPTIMIZATION RESULTS")
@@ -168,19 +169,94 @@ class HP3DLatticeModel:
         print(f"Search space: 6^{self.length-1} = {6**(self.length-1):.2e}")
         print(f"Total function evaluations: {self.evaluation_count}")
         
-        if hasattr(ga_model, 'best_function'):
-            print(f"Best fitness found: {ga_model.best_function:.4f}")
+        if hasattr(self.model, 'best_function'):
+            print(f"Best fitness found: {self.model.best_function:.4f}")
             print(f"Best H-H contacts: {-int(self.calculate_energy(self.best_conformation))}")
             print(f"Compactness (Rg): {self.get_compactness(self.best_conformation):.3f}")
         
-        if hasattr(ga_model, 'report'):
-            print(f"Convergence generation: {len(ga_model.report)}")
+        if hasattr(self.model, 'report'):
+            print(f"Convergence generation: {len(self.model.report)}")
         
         print("="*60)
+
+    def visualize_best(self, title: str = "Best 3D HP Conformation"):
+        """Visualize the best conformation found"""
+        best_conformation = self.best_conformation
+        if best_conformation is None:
+            print("No valid conformation found yet. Run optimization first.")
+            return
+        
+        energy = self.calculate_energy(best_conformation)
+        hh_contacts = -int(energy)
+        compactness = self.get_compactness(best_conformation)
+        
+        fig = plt.figure(figsize=(12, 10))
+        ax = fig.add_subplot(111, projection='3d')
+        
+        # Plot backbone
+        ax.plot(best_conformation[:, 0], 
+                best_conformation[:, 1], 
+                best_conformation[:, 2], 
+                'k-', linewidth=3, alpha=0.7, label='Backbone')
+        
+        # Plot residues with colors
+        for i, (x, y, z) in enumerate(best_conformation):
+            color = 'red' if self.sequence[i] == 'H' else 'blue'
+            ax.scatter(x, y, z, c=color, s=300, alpha=0.8, 
+                        edgecolors='black', linewidth=2)
+            ax.text(x+0.1, y+0.1, z+0.1, f'{i}', fontsize=8)
+        
+        # Highlight H-H contacts
+        contact_pairs = []
+        for i in range(self.length):
+            for j in range(i + 2, self.length):
+                if self.are_neighbors(best_conformation[i], best_conformation[j]):
+                    if self.sequence[i] == 'H' and self.sequence[j] == 'H':
+                        ax.plot([best_conformation[i, 0], best_conformation[j, 0]], 
+                                [best_conformation[i, 1], best_conformation[j, 1]],
+                                [best_conformation[i, 2], best_conformation[j, 2]], 
+                                'g--', linewidth=3, alpha=0.7)
+                        contact_pairs.append((i, j))
+        
+        ax.set_title(f"{title}\nSequence: {self.sequence}\n"
+                    f"Energy: {energy:.1f} | H-H Contacts: {hh_contacts} | "
+                    f"Compactness: {compactness:.2f}")
+        ax.set_xlabel('X')
+        ax.set_ylabel('Y') 
+        ax.set_zlabel('Z')
+        
+        # Set equal aspect ratio
+        coords = best_conformation
+        max_range = np.array([coords[:, 0].max() - coords[:, 0].min(),
+                                coords[:, 1].max() - coords[:, 1].min(),
+                                coords[:, 2].max() - coords[:, 2].min()]).max() / 2.0
+        mid_x = (coords[:, 0].max() + coords[:, 0].min()) * 0.5
+        mid_y = (coords[:, 1].max() + coords[:, 1].min()) * 0.5
+        mid_z = (coords[:, 2].max() + coords[:, 2].min()) * 0.5
+        
+        ax.set_xlim(mid_x - max_range, mid_x + max_range)
+        ax.set_ylim(mid_y - max_range, mid_y + max_range)
+        ax.set_zlim(mid_z - max_range, mid_z + max_range)
+        
+        # Legend
+        h_scatter = ax.scatter([], [], [], c='red', s=100, label='H (Hydrophobic)')
+        p_scatter = ax.scatter([], [], [], c='blue', s=100, label='P (Polar)')
+        if hh_contacts > 0:
+            contact_line = plt.Line2D([0], [0], color='green', linestyle='--', 
+                                        linewidth=3, label='H-H Contact')
+            ax.legend(handles=[h_scatter, p_scatter, contact_line])
+        else:
+            ax.legend(handles=[h_scatter, p_scatter])
+        
+        plt.tight_layout()
+        plt.show()
+        
+        print(f"H-H contact pairs: {contact_pairs}")
+        print(f"Total evaluations: {self.evaluation_count}")
     
-    def get_ga_convergence_data(self, ga_model):
+    def get_ga_convergence_data(self):
         """Extract convergence data from GA model"""
-        if hasattr(ga_model, 'report'):
+        if hasattr(self.model, 'report'):
             # GA report contains best fitness per generation
-            return list(range(len(ga_model.report))), ga_model.report
+            return list(range(len(self.model.report))), self.model.report
         return [], []
