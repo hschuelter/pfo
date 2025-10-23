@@ -159,10 +159,10 @@ class HP3DLatticeModel:
             return float('inf')
         return self.calculate_energy(conformation)
     
-    def get_results_summary(self):
+    def get_results_summary(self, title):
         """Print summary of optimization results"""
         print("\n" + "="*60)
-        print("GENETIC ALGORITHM OPTIMIZATION RESULTS")
+        print(f"{title} OPTIMIZATION RESULTS")
         print("="*60)
         print(f"Sequence: {self.sequence}")
         print(f"Length: {self.length}")

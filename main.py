@@ -23,7 +23,7 @@ def optimize_ga(sequence):
 
     # Default GA parameters
     default_params = {
-        'max_num_iteration': 1000,  # Reduced for faster comparison
+        'max_num_iteration': 10000,
         'population_size': 100,
         'mutation_probability': 0.1,
         'elit_ratio': 0.01,
@@ -56,7 +56,7 @@ def optimize_ga(sequence):
     
     # Store convergence data in the model for comparison
     hp_model.model = ga_model
-    hp_model.get_results_summary()
+    hp_model.get_results_summary("GENETIC ALGORITHM")
     
     return hp_model
 
@@ -78,11 +78,9 @@ def optimize_sa(sequence):
     print(f"Sequence length: {hp_model.length}")
     print(f"Search space size: 6^{hp_model.length-1} = {6**(hp_model.length-1):.2e}")
     
-    # Run optimization
     best_state, best_energy = sa_solver.anneal()
     
-    # Print results
-    sa_solver.get_results_summary()
+    sa_solver.get_results_summary("SIMULATED ANNEALING")
 
     hp_model.best_energy = sa_solver.best_energy_value
     hp_model.energy_history = sa_solver.energy_history

@@ -15,6 +15,7 @@ class HP3DSimulatedAnnealing(sa):
         self.hp_model = hp_model
         self.best_energy_value = float('inf')
         self.best_conformation = None
+        self.get_results_summary = hp_model.get_results_summary
         
         # Energy tracking for convergence plots
         self.energy_history = []
@@ -74,24 +75,6 @@ class HP3DSimulatedAnnealing(sa):
     def copy_state(self, state):
         """Return copy of state (required by simanneal)"""
         return state.copy()
-    
-    def get_results_summary(self):
-        """Print summary of SA optimization results"""
-        print("\n" + "="*60)
-        print("SIMULATED ANNEALING OPTIMIZATION RESULTS")
-        print("="*60)
-        print(f"Sequence: {self.hp_model.sequence}")
-        print(f"Length: {self.hp_model.length}")
-        print(f"Search space: 6^{self.hp_model.length-1} = {6**(self.hp_model.length-1):.2e}")
-        print(f"Total function evaluations: {self.hp_model.evaluation_count}")
-        print(f"Best energy found: {self.best_energy_value:.4f}")
-        print(f"Best H-H contacts: {-int(self.best_energy_value)}")
-        
-        if self.best_conformation is not None:
-            compactness = self.hp_model.get_compactness(self.best_conformation)
-            print(f"Compactness (Rg): {compactness:.3f}")
-        
-        print("="*60)
     
     def get_sa_convergence_data(self):
         """Get convergence data for SA"""
