@@ -57,33 +57,29 @@ jobs:
           name: codecov-umbrella
           fail_ci_if_error: false
 
-  # Job 2: Code Quality Check
-  # code-quality:
-  #   name: Code Quality
-  #   runs-on: ubuntu-latest
+  code-quality:
+    name: Code Quality
+    runs-on: ubuntu-latest
     
-  #   steps:
-  #     - name: Checkout code
-  #       uses: actions/checkout@v4
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
       
-  #     - name: Set up Python
-  #       uses: actions/setup-python@v4
-  #       with:
-  #         python-version: '3.11'
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
       
-  #     - name: Install quality tools
-  #       run: |
-  #         pip install black isort mypy
+      - name: Install quality tools
+        run: |
+          pip install black isort mypy
       
-  #     # Check code formatting with black
-  #     - name: Check formatting with black
-  #       run: black --check src/ tests/
+      - name: Check code formatting with black
+        run: black --check src/ tests/
       
-  #     # Check import sorting
-  #     - name: Check import sorting with isort
-  #       run: isort --check-only src/ tests/
+      - name: Check import sorting with isort
+        run: isort --check-only src/ tests/
       
-  #     # Type checking (if using type hints)
-  #     - name: Type check with mypy
-  #       run: mypy src/ --ignore-missing-imports
-  #       continue-on-error: true  # Don't fail the build on type errors initially
+      - name: Type check with mypy
+        run: mypy src/ --ignore-missing-imports
+        continue-on-error: true
