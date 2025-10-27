@@ -16,15 +16,28 @@ from pfo_simulated_annealing import HP3DSimulatedAnnealing
 # --------------------------------------------------------
 
 
-def optimize_ga(sequence):
-    """Optimize using Genetic Algorithm"""
+def optimize_ga(sequence: str) -> HP3DLatticeModel:
     print("Optimizing with Genetic Algorithm...")
     hp_model = HP3DLatticeModel(sequence)
     hp_model.label = "Genetic Algorithm"
+    hp_model.print_header()
+    ga_model = instantiate_ga(hp_model)
 
-    # Default GA parameters
+    ga_model.run(function=hp_model.fitness_function, no_plot=True)
+    hp_model.energy_history = ga_model.report
+
+    if hp_model.best_conformation is not None:
+        hp_model.visualize_best("Best 3D HP Conformation (GA)")
+        pass
+
+    hp_model.model = ga_model
+    hp_model.get_results_summary("GENETIC ALGORITHM")
+
+    return hp_model
+
+def instantiate_ga(hp_model: HP3DLatticeModel):
     default_params = {
-        "max_num_iteration": 10000,
+        "max_num_iteration": 1000,
         "population_size": 100,
         "mutation_probability": 0.1,
         "elit_ratio": 0.01,
@@ -35,31 +48,12 @@ def optimize_ga(sequence):
         "max_iteration_without_improv": None,
     }
 
-    # Create GA instance
-    ga_model = ga(
+    return ga(
         dimension=hp_model.length - 1,
         variable_type="int",
         variable_boundaries=hp_model.var_bound,
         algorithm_parameters=default_params,
     )
-
-    # Run optimization
-    print(f"Starting GA optimization for sequence: {hp_model.sequence}")
-    print(f"Sequence length: {hp_model.length}")
-    print(f"Search space size: 6^{hp_model.length-1} = {6**(hp_model.length-1):.2e}")
-
-    ga_model.run(function=hp_model.fitness_function, no_plot=True)
-    hp_model.energy_history = ga_model.report
-
-    if hp_model.best_conformation is not None:
-        hp_model.visualize_best("Best 3D HP Conformation (GA)")
-        pass
-
-    # Store convergence data in the model for comparison
-    hp_model.model = ga_model
-    hp_model.get_results_summary("GENETIC ALGORITHM")
-
-    return hp_model
 
 
 def optimize_sa(sequence):
@@ -67,6 +61,7 @@ def optimize_sa(sequence):
     print("Optimizing with Simulated Annealing...")
     hp_model = HP3DLatticeModel(sequence)
     hp_model.label = "Simulated Annealing"
+    hp_model.print_header()
 
     sa_solver = HP3DSimulatedAnnealing(hp_model)
 
@@ -75,10 +70,6 @@ def optimize_sa(sequence):
     sa_solver.Tmin = 0.01  # Minimum temperature
     sa_solver.steps = 10000  # Reduced for faster comparison
     sa_solver.updates = 500  # Update frequency
-
-    print(f"Starting SA optimization for sequence: {hp_model.sequence}")
-    print(f"Sequence length: {hp_model.length}")
-    print(f"Search space size: 6^{hp_model.length-1} = {6**(hp_model.length-1):.2e}")
 
     best_state, best_energy = sa_solver.anneal()
 

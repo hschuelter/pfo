@@ -33,13 +33,12 @@ class HP3DSimulatedAnnealing(sa):
         super(HP3DSimulatedAnnealing, self).__init__(self.state)
 
     def energy(self) -> float:
-        """Calculate energy of current state (required by simanneal)"""
         self.hp_model.evaluation_count += 1
         self.iteration_count += 1
 
         conformation = self.hp_model.moves_to_conformation(self.state)
         if conformation is None:
-            energy_val = 1000  # High penalty for invalid conformations
+            energy_val = 1000
         else:
             energy_val = self.hp_model.calculate_energy(conformation)
 
@@ -48,12 +47,10 @@ class HP3DSimulatedAnnealing(sa):
             self.best_energy_value = energy_val
             if conformation is not None:
                 self.best_conformation = conformation.copy()
-                # Also update the model's best for consistency
                 if energy_val < self.hp_model.best_energy:
                     self.hp_model.best_energy = energy_val
                     self.hp_model.best_conformation = conformation.copy()
 
-        # Track energy history (record best energy found so far)
         self.energy_history.append(self.best_energy_value)
 
         return energy_val

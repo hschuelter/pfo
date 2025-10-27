@@ -104,16 +104,15 @@ class HP3DLatticeModel:
         return conformation
 
     def calculate_energy(self, conformation: np.ndarray) -> float:
-        """Calculate HP model energy (negative H-H contacts)"""
         hh_contacts = 0
 
         for i in range(self.length):
-            for j in range(i + 2, self.length):  # Skip adjacent residues
+            for j in range(i + 2, self.length):
                 if self.sequence[i] == "H" and self.sequence[j] == "H":
                     if self.are_neighbors(conformation[i], conformation[j]):
                         hh_contacts += 1
 
-        return -hh_contacts  # Minimize (more contacts = lower energy)
+        return -hh_contacts
 
     def are_neighbors(self, pos1: np.ndarray, pos2: np.ndarray) -> bool:
         distance = np.linalg.norm(pos1 - pos2)
@@ -292,9 +291,13 @@ class HP3DLatticeModel:
         print(f"H-H contact pairs: {contact_pairs}")
         print(f"Total evaluations: {self.evaluation_count}")
 
+    def print_header(self) -> None:
+        print(f"Sequence: {self.sequence}")
+        print(f"Length: {self.length}")
+        print(f"Search space size: 6^{self.length-1} = {6**(self.length-1):.2e}")
+
     def get_ga_convergence_data(self):
         """Extract convergence data from GA model"""
         if hasattr(self.model, "report"):
-            # GA report contains best fitness per generation
             return list(range(len(self.model.report))), self.model.report
         return [], []
