@@ -1,4 +1,6 @@
 # --------------------------------------------------------
+from typing import Optional
+
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
@@ -12,14 +14,16 @@ from pfo_lattice_model import HP3DLatticeModel
 class HP3DSimulatedAnnealing(sa):
     """Simulated Annealing extension for HP3D protein folding"""
 
-    def __init__(self, hp_model: HP3DLatticeModel, initial_moves: np.ndarray = None):
+    def __init__(
+        self, hp_model: HP3DLatticeModel, initial_moves: Optional[np.ndarray] = None
+    ):
         self.hp_model = hp_model
         self.best_energy_value = float("inf")
         self.best_conformation = None
         self.get_results_summary = hp_model.get_results_summary
 
         # Energy tracking for convergence plots
-        self.energy_history = []
+        self.energy_history: list[float] = []
         self.label = ""
         self.iteration_count = 0
 

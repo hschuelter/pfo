@@ -1,6 +1,7 @@
-import pytest
+from unittest.mock import MagicMock, Mock, patch
+
 import numpy as np
-from unittest.mock import Mock, patch, MagicMock
+import pytest
 
 from src.pfo_lattice_model import HP3DLatticeModel
 from src.pfo_simulated_annealing import HP3DSimulatedAnnealing
@@ -10,13 +11,14 @@ from src.pfo_simulated_annealing import HP3DSimulatedAnnealing
 def simple_model():
     return HP3DLatticeModel("HPHPH")
 
+
 class TestInitialization:
     def test_initialization(self, simple_model):
         assert simple_model.sequence == "HPHPH"
         assert simple_model.length == 5
         assert len(simple_model.var_bound) == 4
         assert simple_model.evaluation_count == 0
-        assert simple_model.best_energy == float('inf')
+        assert simple_model.best_energy == float("inf")
 
     def test_invalid_sequence_with_another_character(self):
         with pytest.raises(ValueError, match="only 'H' and 'P'"):
@@ -43,6 +45,7 @@ class TestInitialization:
 
     def test_variable_bounds_length(self, simple_model):
         assert len(simple_model.var_bound) == simple_model.length - 1
+
 
 if __name__ == "__main__":
     pytest.main([__file__, "-v", "--tb=short"])

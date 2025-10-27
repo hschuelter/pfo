@@ -1,9 +1,10 @@
 # --------------------------------------------------------
-from typing import List, Optional, Tuple
+from typing import Any, List, Optional, Tuple
 
 import matplotlib.pyplot as plt
 import numpy as np
 from geneticalgorithm2 import geneticalgorithm2 as ga
+from matplotlib.figure import Figure
 from mpl_toolkits.mplot3d import Axes3D
 
 # --------------------------------------------------------
@@ -20,7 +21,7 @@ class HP3DLatticeModel:
         self.sequence = sequence.upper()
         self.length = len(sequence)
         self.evaluation_count = 0
-        self.energy_history = []
+        self.energy_history: list[float] = []
         self.label = ""
         self.model = None
 
@@ -43,7 +44,7 @@ class HP3DLatticeModel:
         self.var_bound = [(0, 5)] * (self.length - 1)  # n-1 moves for n residues
 
         # Store best conformation for later visualization
-        self.best_conformation = None
+        self.best_conformation: Any = None
         self.best_energy = float("inf")
 
     def fitness_function(self, moves: np.ndarray) -> float:
@@ -83,7 +84,7 @@ class HP3DLatticeModel:
 
         return total_fitness
 
-    def moves_to_conformation(self, moves: np.ndarray) -> np.ndarray:
+    def moves_to_conformation(self, moves: np.ndarray) -> Optional[np.ndarray]:
         """Convert move sequence to 3D conformation"""
         conformation = np.zeros((self.length, 3))
         conformation[0] = [0, 0, 0]  # Start at origin
@@ -96,7 +97,7 @@ class HP3DLatticeModel:
 
             # Check for collision
             if tuple(new_pos) in occupied:
-                return None  # Invalid conformation
+                return None
 
             conformation[i + 1] = new_pos
             occupied.add(tuple(new_pos))
@@ -116,10 +117,9 @@ class HP3DLatticeModel:
 
     def are_neighbors(self, pos1: np.ndarray, pos2: np.ndarray) -> bool:
         distance = np.linalg.norm(pos1 - pos2)
-        return abs(distance - 1.0) < 0.1
+        return bool(abs(distance - 1.0) < 0.1)
 
     def get_compactness(self, conformation: np.ndarray) -> float:
-        """Calculate radius of gyration"""
         center = np.mean(conformation, axis=0)
         distances_squared = np.sum((conformation - center) ** 2, axis=1)
         return np.sqrt(np.mean(distances_squared))
@@ -191,7 +191,7 @@ class HP3DLatticeModel:
 
         print("=" * 60)
 
-    def visualize_best(self, title: str = "Best 3D HP Conformation"):
+    def visualize_best(self, title: str = "Best 3D HP Conformation") -> None:
         """Visualize the best conformation found"""
         best_conformation = self.best_conformation
         if best_conformation is None:
@@ -202,8 +202,8 @@ class HP3DLatticeModel:
         hh_contacts = -int(energy)
         compactness = self.get_compactness(best_conformation)
 
-        fig = plt.figure(figsize=(12, 10))
-        ax = fig.add_subplot(111, projection="3d")
+        fig: Figure = plt.figure(figsize=(12, 10))
+        ax: Axes3D = fig.add_subplot(111, projection="3d")  # Type hint as Axes3D
 
         # Plot backbone
         ax.plot(
@@ -222,10 +222,12 @@ class HP3DLatticeModel:
             ax.scatter(
                 x, y, z, c=color, s=300, alpha=0.8, edgecolors="black", linewidth=2
             )
-            ax.text(x + 0.1, y + 0.1, z + 0.1, f"{i}", fontsize=8)
+            ax.text(
+                x + 0.1, y + 0.1, z + 0.1, f"{i}", fontsize=8
+            )  # This is correct for 3D
 
         # Highlight H-H contacts
-        contact_pairs = []
+        contact_pairs: List[Tuple[int, int]] = []
         for i in range(self.length):
             for j in range(i + 2, self.length):
                 if self.are_neighbors(best_conformation[i], best_conformation[j]):
@@ -247,7 +249,7 @@ class HP3DLatticeModel:
         )
         ax.set_xlabel("X")
         ax.set_ylabel("Y")
-        ax.set_zlabel("Z")
+        ax.set_zlabel("Z")  # Now recognized because ax is Axes3D
 
         # Set equal aspect ratio
         coords = best_conformation
@@ -267,7 +269,7 @@ class HP3DLatticeModel:
 
         ax.set_xlim(mid_x - max_range, mid_x + max_range)
         ax.set_ylim(mid_y - max_range, mid_y + max_range)
-        ax.set_zlim(mid_z - max_range, mid_z + max_range)
+        ax.set_zlim(mid_z - max_range, mid_z + max_range)  # Now recognized
 
         # Legend
         h_scatter = ax.scatter([], [], [], c="red", s=100, label="H (Hydrophobic)")

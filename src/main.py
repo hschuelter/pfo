@@ -35,6 +35,7 @@ def optimize_ga(sequence: str) -> HP3DLatticeModel:
 
     return hp_model
 
+
 def instantiate_ga(hp_model: HP3DLatticeModel):
     default_params = {
         "max_num_iteration": 1000,
