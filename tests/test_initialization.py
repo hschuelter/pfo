@@ -3,13 +3,13 @@ from unittest.mock import MagicMock, Mock, patch
 import numpy as np
 import pytest
 
-from src.pfo_lattice_model import HP3DLatticeModel
+from src.pfo_base import PFOBase
 from src.pfo_simulated_annealing import HP3DSimulatedAnnealing
 
 
 @pytest.fixture
 def simple_model():
-    return HP3DLatticeModel("HPHPH")
+    return PFOBase("HPHPH")
 
 
 class TestInitialization:
@@ -22,14 +22,14 @@ class TestInitialization:
 
     def test_invalid_sequence_with_another_character(self):
         with pytest.raises(ValueError, match="only 'H' and 'P'"):
-            HP3DLatticeModel("HPXPH")
+            PFOBase("HPXPH")
 
     def test_lowercase_sequence(self):
-        model = HP3DLatticeModel("hphph")
+        model = PFOBase("hphph")
         assert model.sequence == "HPHPH"
 
     def test_mixed_case_sequence(self):
-        model = HP3DLatticeModel("HpHpH")
+        model = PFOBase("HpHpH")
         assert model.sequence == "HPHPH"
 
     def test_directions_shape(self, simple_model):

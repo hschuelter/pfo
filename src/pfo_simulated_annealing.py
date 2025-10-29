@@ -6,7 +6,7 @@ import numpy as np
 import pandas as pd
 from simanneal import Annealer as sa
 
-from pfo_lattice_model import HP3DLatticeModel
+from pfo_base import PFOBase
 
 # --------------------------------------------------------
 
@@ -15,7 +15,7 @@ class HP3DSimulatedAnnealing(sa):
     """Simulated Annealing extension for HP3D protein folding"""
 
     def __init__(
-        self, hp_model: HP3DLatticeModel, initial_moves: Optional[np.ndarray] = None
+        self, hp_model: PFOBase, initial_moves: Optional[np.ndarray] = None
     ):
         self.hp_model = hp_model
         self.best_energy_value = float("inf")

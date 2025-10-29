@@ -10,7 +10,7 @@ from mpl_toolkits.mplot3d import Axes3D
 # --------------------------------------------------------
 
 
-class HP3DLatticeModel:
+class PFOBase:
     def __init__(self, sequence: str):
         """
         Initialize 3D HP lattice model for genetic algorithm

@@ -10,15 +10,15 @@ import numpy as np
 import pandas as pd
 from geneticalgorithm2 import geneticalgorithm2 as ga
 
-from pfo_lattice_model import HP3DLatticeModel
+from pfo_base import PFOBase
 from pfo_simulated_annealing import HP3DSimulatedAnnealing
 
 # --------------------------------------------------------
 
 
-def optimize_ga(sequence: str) -> HP3DLatticeModel:
+def optimize_ga(sequence: str) -> PFOBase:
     print("Optimizing with Genetic Algorithm...")
-    hp_model = HP3DLatticeModel(sequence)
+    hp_model = PFOBase(sequence)
     hp_model.label = "Genetic Algorithm"
     hp_model.print_header()
     ga_model = instantiate_ga(hp_model)
@@ -36,7 +36,7 @@ def optimize_ga(sequence: str) -> HP3DLatticeModel:
     return hp_model
 
 
-def instantiate_ga(hp_model: HP3DLatticeModel):
+def instantiate_ga(hp_model: PFOBase):
     default_params = {
         "max_num_iteration": 1000,
         "population_size": 100,
@@ -60,7 +60,7 @@ def instantiate_ga(hp_model: HP3DLatticeModel):
 def optimize_sa(sequence):
     """Optimize using Simulated Annealing"""
     print("Optimizing with Simulated Annealing...")
-    hp_model = HP3DLatticeModel(sequence)
+    hp_model = PFOBase(sequence)
     hp_model.label = "Simulated Annealing"
     hp_model.print_header()
 
