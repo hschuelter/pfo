@@ -18,8 +18,7 @@ from pfo_simulated_annealing import HP3DSimulatedAnnealing
 
 def optimize_ga(sequence: str) -> PFOBase:
     print("Optimizing with Genetic Algorithm...")
-    hp_model = PFOBase(sequence)
-    hp_model.label = "Genetic Algorithm"
+    hp_model = PFOBase(sequence, "Genetic Algorithm")
     hp_model.print_header()
     ga_model = instantiate_ga(hp_model)
 
@@ -28,7 +27,6 @@ def optimize_ga(sequence: str) -> PFOBase:
 
     if hp_model.best_conformation is not None:
         hp_model.visualize_best("Best 3D HP Conformation (GA)")
-        pass
 
     hp_model.model = ga_model
     hp_model.get_results_summary("GENETIC ALGORITHM")
@@ -60,8 +58,7 @@ def instantiate_ga(hp_model: PFOBase):
 def optimize_sa(sequence):
     """Optimize using Simulated Annealing"""
     print("Optimizing with Simulated Annealing...")
-    hp_model = PFOBase(sequence)
-    hp_model.label = "Simulated Annealing"
+    hp_model = PFOBase(sequence, "Simulated Annealing")
     hp_model.print_header()
 
     sa_solver = HP3DSimulatedAnnealing(hp_model)

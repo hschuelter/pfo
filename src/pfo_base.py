@@ -11,7 +11,7 @@ from mpl_toolkits.mplot3d import Axes3D
 
 
 class PFOBase:
-    def __init__(self, sequence: str):
+    def __init__(self, sequence: str, label: str = ""):
         """
         Initialize 3D HP lattice model for genetic algorithm
 
@@ -21,10 +21,17 @@ class PFOBase:
         self.sequence = sequence.upper()
         self.length = len(sequence)
         self.evaluation_count = 0
+        self.label = label
+
+        self.best_conformation: Any = None
+        self.best_energy = float("inf")
         self.energy_history: list[float] = []
-        self.label = ""
+        self.var_bound = [(0, 5)] * (self.length - 1)  # n-1 moves for n residues
+
+        # [TO DO] Remove this
         self.model = None
 
+        # [TO DO] aminoacids to HP
         if not all(aa in "HP" for aa in self.sequence):
             raise ValueError("Sequence must contain only 'H' and 'P' residues")
 
@@ -39,13 +46,6 @@ class PFOBase:
                 [0, 0, -1],  # 5: -z
             ]
         )
-
-        # Variable bounds for GA (each gene represents a move direction 0-5)
-        self.var_bound = [(0, 5)] * (self.length - 1)  # n-1 moves for n residues
-
-        # Store best conformation for later visualization
-        self.best_conformation: Any = None
-        self.best_energy = float("inf")
 
     def fitness_function(self, moves: np.ndarray) -> float:
         """
@@ -66,17 +66,12 @@ class PFOBase:
         # Generate conformation from moves
         conformation = self.moves_to_conformation(discrete_moves)
 
-        # Check validity and calculate energy
         if conformation is None:
-            # return 1000  # High penalty for invalid conformations
             return 0
 
         energy = self.calculate_energy(conformation)
 
-        # Add compactness bonus (optional - helps find more realistic structures)
-        compactness_penalty = self.get_compactness(conformation) * 0.1
-
-        total_fitness = energy + compactness_penalty
+        total_fitness = energy
 
         if total_fitness < self.best_energy:
             self.best_energy = total_fitness
@@ -87,16 +82,15 @@ class PFOBase:
     def moves_to_conformation(self, moves: np.ndarray) -> Optional[np.ndarray]:
         """Convert move sequence to 3D conformation"""
         conformation = np.zeros((self.length, 3))
-        conformation[0] = [0, 0, 0]  # Start at origin
+        conformation[0] = [0, 0, 0]
 
-        # Track occupied positions
         occupied = {tuple(conformation[0])}
 
         for i, move in enumerate(moves):
             new_pos = conformation[i] + self.directions[move]
 
-            # Check for collision
             if tuple(new_pos) in occupied:
+                # return np.array([0] * self.length)
                 return None
 
             conformation[i + 1] = new_pos
@@ -119,10 +113,10 @@ class PFOBase:
         distance = np.linalg.norm(pos1 - pos2)
         return bool(abs(distance - 1.0) < 0.1)
 
-    def get_compactness(self, conformation: np.ndarray) -> float:
-        center = np.mean(conformation, axis=0)
-        distances_squared = np.sum((conformation - center) ** 2, axis=1)
-        return np.sqrt(np.mean(distances_squared))
+    # def get_compactness(self, conformation: np.ndarray) -> float:
+    #     center = np.mean(conformation, axis=0)
+    #     distances_squared = np.sum((conformation - center) ** 2, axis=1)
+    #     return np.sqrt(np.mean(distances_squared))
 
     # SIMULATED ANNEALING SUPPORT
     def generate_random_valid_moves(
@@ -160,13 +154,6 @@ class PFOBase:
 
         return self.generate_random_valid_moves()
 
-    def evaluate_energy_from_moves(self, moves: np.ndarray) -> float:
-        """Evaluate energy directly from moves"""
-        conformation = self.moves_to_conformation(moves)
-        if conformation is None:
-            return float("inf")
-        return self.calculate_energy(conformation)
-
     def get_results_summary(self, title):
         """Print summary of optimization results"""
         print("\n" + "=" * 60)
@@ -182,10 +169,8 @@ class PFOBase:
             print(
                 f"Best H-H contacts: {-int(self.calculate_energy(self.best_conformation))}"
             )
-            print(
-                f"Compactness (Rg): {self.get_compactness(self.best_conformation):.3f}"
-            )
 
+        print("AQUI ", self.model)
         if hasattr(self.model, "report"):
             print(f"Convergence generation: {len(self.model.report)}")
 
@@ -200,7 +185,7 @@ class PFOBase:
 
         energy = self.calculate_energy(best_conformation)
         hh_contacts = -int(energy)
-        compactness = self.get_compactness(best_conformation)
+        # compactness = self.get_compactness(best_conformation)
 
         fig: Figure = plt.figure(figsize=(12, 10))
         ax: Axes3D = fig.add_subplot(111, projection="3d")  # Type hint as Axes3D
@@ -245,7 +230,7 @@ class PFOBase:
         ax.set_title(
             f"{title}\nSequence: {self.sequence}\n"
             f"Energy: {energy:.1f} | H-H Contacts: {hh_contacts} | "
-            f"Compactness: {compactness:.2f}"
+            # f"Compactness: {compactness:.2f}"
         )
         ax.set_xlabel("X")
         ax.set_ylabel("Y")
